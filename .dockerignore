@@ -1,0 +1,9 @@
+*.blend1
+output/
+__pycache__
+*.pyc
+*.json
+.env*
+build/
+dist/
+*.egg-info
