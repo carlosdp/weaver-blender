@@ -1,89 +1,10 @@
 import bpy
 import math
 import os
-from mathutils import geometry, Vector
+from mathutils import Vector
 from mathutils.geometry import intersect_line_plane
 
-
-def bezier_tangent(pt0=Vector(), pt1=Vector(), pt2=Vector(), pt3=Vector(), step=0.5):
-    # Return early if step is out of bounds [0, 1].
-    if step <= 0.0:
-        return pt1 - pt0
-    if step >= 1.0:
-        return pt3 - pt2
-
-    # Find coefficients.
-    u = 1.0 - step
-    ut6 = u * step * 6.0
-    tsq3 = step * step * 3.0
-    usq3 = u * u * 3.0
-
-    # Find tangent and return.
-    return (pt1 - pt0) * usq3 + (pt2 - pt1) * ut6 + (pt3 - pt2) * tsq3
-
-
-def distribute_points_on_curve(curve, num_points):
-    bez_points = curve.data.splines[0].bezier_points
-
-    # Create an empty list.
-    points_on_curve = []
-
-    # Loop through the bezier points in the bezier curve.
-    bez_len = len(bez_points)
-    res_per_section = 1 if bez_len / \
-        2 >= num_points else math.ceil((num_points - (bez_len / 2)) / (bez_len / 2))
-
-    i_range = range(1, bez_len, 1)
-
-    for i in i_range:
-        # Cache a current and next point.
-        curr_point = bez_points[i - 1]
-        next_point = bez_points[i]
-
-        # Calculate bezier points for this segment.
-        calc_points = geometry.interpolate_bezier(
-            curr_point.co,
-            curr_point.handle_right,
-            next_point.handle_left,
-            next_point.co,
-            res_per_section + 1)
-
-        # The last point on this segment will be the
-        # first point on the next segment in the spline.
-        if i != bez_len - 1:
-            calc_points.pop()
-
-        point_tangent_pairs = []
-
-        # Loop through the calculated points.
-        points_len = len(calc_points)
-        to_percent = 1.0 / (points_len - 1) if points_len > 1 else 1.0
-        j_range = range(0, points_len, 1)
-        for j in j_range:
-            # Convert progress through the loop to a percent.
-            j_percent = j * to_percent
-
-            # Calculate the tangent.
-            tangent = bezier_tangent(
-                pt0=curr_point.co,
-                pt1=curr_point.handle_right,
-                pt2=next_point.handle_left,
-                pt3=next_point.co,
-                step=j_percent)
-
-            # Set the vector to unit length.
-            tangent.normalize()
-
-            # Place the point and tangent in a dictionary.
-            entry = {'co': calc_points[j], 'tan': tangent}
-
-            # Append the dictionary to the list.
-            point_tangent_pairs.append(entry)
-
-        # Concatenate lists.
-        points_on_curve += point_tangent_pairs
-
-    return points_on_curve
+from . import animation
 
 
 def add_audio(name, sound_path, scene, frame_start, library_path):
@@ -104,7 +25,7 @@ def add_audio(name, sound_path, scene, frame_start, library_path):
     return frame_end
 
 
-def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_end_frame, library_path):
+def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_end_frame, library_path, duration):
     stage_points = stage["reference_points"]
     if location == "top":
         point = (stage_points["tr"] + stage_points["tl"]) / 2
@@ -128,8 +49,6 @@ def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_en
         # center
         point = (stage_points["tr"] + stage_points["bl"]) / 2
 
-    outside_point = point + (point.normalized() * 20)
-
     object_name = "screenshot.{}.{}".format(
         audio_start_frame, tag["timeOffset"])
 
@@ -145,29 +64,15 @@ def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_en
     image_data.name = "asset.{}".format(object_name)
     image_data.pack()
 
+    image_plane.location = point
     image_plane.scale = (4, 4, 4)
     image_plane.rotation_euler = (math.pi / 2, math.pi / 2, math.pi / 2)
 
     asset_start_frame = audio_start_frame + \
         math.floor(tag['timeOffset'] * scene.render.fps) - 10
-    asset_end_frame = asset_start_frame + 60
+    asset_end_frame = asset_start_frame + duration
 
-    image_plane.location = outside_point
-    image_plane.hide_render = True
-    image_plane.keyframe_insert("hide_render", frame=asset_start_frame - 11)
-    image_plane.hide_render = False
-    image_plane.keyframe_insert("location", frame=asset_start_frame - 10)
-    image_plane.keyframe_insert("hide_render", frame=asset_start_frame - 10)
-
-    image_plane.location = point
-    image_plane.keyframe_insert("location", frame=asset_start_frame)
-    image_plane.keyframe_insert("location", frame=asset_start_frame + 60)
-
-    image_plane.location = outside_point
-    image_plane.keyframe_insert("location", frame=asset_start_frame + 70)
-    image_plane.keyframe_insert("hide_render", frame=asset_start_frame + 70)
-    image_plane.hide_render = True
-    image_plane.keyframe_insert("hide_render", frame=asset_start_frame + 71)
+    animation.scale_up(image_plane, asset_start_frame, asset_end_frame)
 
     swoosh_in_name = "{}.swoosh-in".format(object_name)
     scene.sequence_editor.sequences.new_sound(
@@ -185,33 +90,19 @@ def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_en
     return (asset_start_frame, asset_end_frame)
 
 
-def add_text(custom_text, scene, stage, tag, location, audio_start_frame, audio_end_frame, material, library_path):
+def add_text(custom_text, scene, stage, tag, location, audio_start_frame, audio_end_frame, material, library_path, duration):
     stage_root = stage["root"]
 
     stage_points = stage["reference_points"]
-    if location == "top":
+    if location in ("top", "top_right", "top_left"):
         point = (stage_points["tr"] + stage_points["tl"]) / 2
-    elif location == "left":
-        point = (stage_points["tl"] + stage_points["bl"]) / 2
-    elif location == "right":
-        point = (stage_points["tr"] + stage_points["br"]) / 2
-    elif location == "bottom":
-        point = (stage_points["br"] + stage_points["bl"]) / 2
-    elif location == "center":
+    elif location in ("left", "right", "center"):
         point = (stage_points["tr"] + stage_points["bl"]) / 2
-    elif location == "top_right":
-        point = (stage_points["tr"] + stage_points["tl"]) / 4
-    elif location == "top_left":
-        point = (stage_points["tl"] + stage_points["tr"]) / 4
-    elif location == "bottom_right":
-        point = (stage_points["br"] + stage_points["bl"]) / 4
-    elif location == "bottom_left":
-        point = (stage_points["bl"] + stage_points["br"]) / 4
+    elif location in ("bottom", "bottom_right", "bottom_left"):
+        point = (stage_points["br"] + stage_points["bl"]) / 2
     else:
         # center
         point = (stage_points["tr"] + stage_points["bl"]) / 2
-
-    outside_point = point + (point.normalized() * 20)
 
     object_name = "text.{}.{}".format(
         audio_start_frame, tag["timeOffset"])
@@ -238,24 +129,9 @@ def add_text(custom_text, scene, stage, tag, location, audio_start_frame, audio_
 
     asset_start_frame = audio_start_frame + \
         math.floor(tag['timeOffset'] * scene.render.fps) - 10
-    asset_end_frame = asset_start_frame + 60
+    asset_end_frame = asset_start_frame + duration
 
-    text_object.location = outside_point
-    text_object.hide_render = True
-    text_object.keyframe_insert("hide_render", frame=asset_start_frame - 11)
-    text_object.hide_render = False
-    text_object.keyframe_insert("location", frame=asset_start_frame - 10)
-    text_object.keyframe_insert("hide_render", frame=asset_start_frame - 10)
-
-    text_object.location = point
-    text_object.keyframe_insert("location", frame=asset_start_frame)
-    text_object.keyframe_insert("location", frame=asset_start_frame + 60)
-
-    text_object.location = outside_point
-    text_object.keyframe_insert("location", frame=asset_start_frame + 70)
-    text_object.keyframe_insert("hide_render", frame=asset_start_frame + 70)
-    text_object.hide_render = True
-    text_object.keyframe_insert("hide_render", frame=asset_start_frame + 71)
+    animation.scale_up(text_object, asset_start_frame, asset_end_frame)
 
     swoosh_in_name = "{}.swoosh-in".format(object_name)
     scene.sequence_editor.sequences.new_sound(
@@ -300,7 +176,7 @@ def camera_stage_box(camera, scene, distance, safe_area=None):
     result = []
 
     # roll around in CCW direction
-    for i, image_coord in enumerate(((left, bottom), (left, top), (right, top), (right, bottom))):
+    for image_coord in ((left, bottom), (left, top), (right, top), (right, bottom)):
         cx, cy = image_coord
         # vector pointing from cam origin thru image point (PERSP)
         v = (bl + (cx * x + cy * y)) - o
@@ -317,23 +193,6 @@ def add_stage(id, video_scene, location=(0, 0, 0)):
     empty.location = location
     empty.rotation_euler[0] = 1.5708
     video_scene.collection.objects.link(empty)
-
-    # create bezier circle, rotate 90 degrees on y axis, parent to empty object, move it 5 units on the X axis using bpy.data API
-    bpy.ops.curve.primitive_bezier_circle_add()
-    circle_object = bpy.data.objects["BezierCircle"]
-    circle_object.name = "{}.asset_stage".format(id)
-    circle_object.parent = empty
-    circle_object.location = (3, 0, 0)
-    circle_object.scale = (2, 2, 2)
-    circle_object.rotation_euler[1] = 1.5708
-
-    circle_object.data.use_path = False
-
-    bpy.context.evaluated_depsgraph_get().update()
-
-    # todo: set to an actual count
-    stage_points = distribute_points_on_curve(
-        circle_object, 8)
 
     # create a camera object, parented to the empty object, using bpy.data API
     camera_distance = 20
@@ -363,7 +222,6 @@ def add_stage(id, video_scene, location=(0, 0, 0)):
         'name': empty.name,
         'camera': camera_empty,
         'root': empty,
-        'asset_stage': circle_object,
         'reference_points': {
             'bl': empty.matrix_world.inverted() @ bl,
             'tl': empty.matrix_world.inverted() @ tl,

@@ -141,14 +141,52 @@ if '__main__' == __name__:
         scene_camera.keyframe_insert(
             "rotation_euler", frame=frame_end-buffer_frames)
 
+        standard_duration = 60  # frames
+        fps = video_scene.render.fps
+
         if 'speech' in block:
             tags = block['speech']['tags']
+            directions = block['stage']['directions']
+
+            # a list of dicts with each direction, and it's corresponding tag (or None)
+            tagged_directions = []
+            for i, direction in enumerate(directions):
+                tag = tags.get(str(i))
+                tagged_directions.append({
+                    'direction': direction,
+                    'tag': tag
+                })
+
+            # sort tagged directions by tag time offset
+            tagged_directions = sorted(
+                tagged_directions, key=lambda x: x['tag']['timeOffset'] if x['tag'] else 0)
 
             # place assets with timings
-            for i, direction in enumerate(block['stage']['directions']):
-                tag = tags.get(str(i))
+            for i in range(len(tagged_directions)):
+                direction = tagged_directions[i]['direction']
+                tag = tagged_directions[i]['tag']
+
+                duration = standard_duration
 
                 if tag:
+                    tag_frame_start = frame_start + \
+                        int((tag['timeOffset']) * fps)
+
+                    # if there is a next tag, bridge the gap
+                    if i < len(tagged_directions) - 1:
+                        next_direction = tagged_directions[i+1]['direction']
+
+                        if 'asset' in next_direction or next_direction['type'] == 'text':
+                            next_tag = tagged_directions[i+1]['tag']
+                            if next_tag:
+                                next_tag_frame_start = frame_start + \
+                                    int((next_tag['timeOffset']) * fps)
+                                if next_tag_frame_start - tag_frame_start > 60:
+                                    duration = next_tag_frame_start - tag_frame_start
+                    else:
+                        # make the asset last until the end of the speech
+                        duration = frame_end - tag_frame_start
+
                     if direction['type'] in ('image', 'screenshot') and 'asset' in direction:
                         asset = direction['asset']
                         asset_file = "{}/{}_{}".format(asset_workspace,
@@ -156,10 +194,10 @@ if '__main__' == __name__:
                         download_storage_object(
                             'assets', asset['key'], asset_file)
                         layout.add_image(asset_file, video_scene, stage, tag,
-                                         direction['location'], frame_start, frame_end, library_path)
+                                         direction['location'], frame_start, frame_end, library_path, duration)
                     elif direction['type'] == 'text':
                         layout.add_text(direction['data'], video_scene, stage, tag,
-                                        direction['location'], frame_start, frame_end, text_material, library_path)
+                                        direction['location'], frame_start, frame_end, text_material, library_path, duration)
 
         current_frame = frame_end + 1
 
