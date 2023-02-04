@@ -166,9 +166,9 @@ if '__main__' == __name__:
                 direction = tagged_directions[i]['direction']
                 tag = tagged_directions[i]['tag']
 
-                duration = standard_duration
-
                 if tag:
+                    duration = standard_duration
+
                     tag_frame_start = frame_start + \
                         int((tag['timeOffset']) * fps)
 
@@ -193,11 +193,23 @@ if '__main__' == __name__:
                                                        block['id'], i)
                         download_storage_object(
                             'assets', asset['key'], asset_file)
-                        layout.add_image(asset_file, video_scene, stage, tag,
-                                         direction['location'], frame_start, frame_end, library_path, duration)
+                        layout.add_image(
+                            library_path, asset_file, video_scene, stage, direction['location'], tag_frame_start, tag_frame_start + duration)
                     elif direction['type'] == 'text':
-                        layout.add_text(direction['data'], video_scene, stage, tag,
-                                        direction['location'], frame_start, frame_end, text_material, library_path, duration)
+                        layout.add_text(library_path, direction['data'], video_scene, stage,
+                                        direction['location'], tag_frame_start, tag_frame_start + duration, text_material)
+                elif direction['location'] == 'background':
+                    if direction['type'] in ('image', 'screenshot') and 'asset' in direction:
+                        asset = direction['asset']
+                        asset_file = "{}/{}_{}".format(asset_workspace,
+                                                       block['id'], i)
+                        download_storage_object(
+                            'assets', asset['key'], asset_file)
+                        layout.add_image(
+                            library_path, asset_file, video_scene, stage, direction['location'], None, None)
+                    elif direction['type'] == 'text':
+                        layout.add_text(
+                            library_path, direction['data'], video_scene, stage, direction['location'], None, None, text_material)
 
         current_frame = frame_end + 1
 

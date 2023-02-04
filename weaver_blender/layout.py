@@ -1,6 +1,7 @@
 import bpy
 import math
 import os
+import random
 from mathutils import Vector
 from mathutils.geometry import intersect_line_plane
 
@@ -25,7 +26,7 @@ def add_audio(name, sound_path, scene, frame_start, library_path):
     return frame_end
 
 
-def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_end_frame, library_path, duration):
+def add_image(library_path, filepath, scene, stage, location, start_frame, end_frame):
     stage_points = stage["reference_points"]
     if location == "top":
         point = (stage_points["tr"] + stage_points["tl"]) / 2
@@ -45,12 +46,13 @@ def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_en
         point = (stage_points["br"] + stage_points["bl"]) / 4
     elif location == "bottom_left":
         point = (stage_points["bl"] + stage_points["br"]) / 4
+    elif location == "background":
+        point = stage_points["bg"]
     else:
         # center
         point = (stage_points["tr"] + stage_points["bl"]) / 2
 
-    object_name = "screenshot.{}.{}".format(
-        audio_start_frame, tag["timeOffset"])
+    object_name = "screenshot.{}.{}".format(start_frame, end_frame)
 
     filename = os.path.basename(filepath)
     file_base = os.path.splitext(filename)[0]
@@ -65,32 +67,39 @@ def add_image(filepath, scene, stage, tag, location, audio_start_frame, audio_en
     image_data.pack()
 
     image_plane.location = point
-    image_plane.scale = (4, 4, 4)
+    image_plane.scale = (4, 4, 4) if location != "background" else (8, 8, 8)
     image_plane.rotation_euler = (math.pi / 2, math.pi / 2, math.pi / 2)
 
-    asset_start_frame = audio_start_frame + \
-        math.floor(tag['timeOffset'] * scene.render.fps) - 10
-    asset_end_frame = asset_start_frame + duration
+    if start_frame is not None and end_frame is not None:
+        asset_start_frame = start_frame - 10
+        asset_end_frame = end_frame
 
-    animation.scale_up(image_plane, asset_start_frame, asset_end_frame)
+        animation.scale_up(image_plane, asset_start_frame, asset_end_frame)
 
-    swoosh_in_name = "{}.swoosh-in".format(object_name)
-    scene.sequence_editor.sequences.new_sound(
-        name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
-    seq = scene.sequence_editor.sequences_all[swoosh_in_name]
-    seq.volume = 0.5
-
-    if asset_end_frame < audio_end_frame - 30:
-        swoosh_out_name = "{}.swoosh-out".format(object_name)
+        swoosh_in_name = "{}.swoosh-in".format(object_name)
         scene.sequence_editor.sequences.new_sound(
-            name=swoosh_out_name, filepath=os.path.join(library_path, "swoosh-out.wav"), channel=2, frame_start=asset_end_frame)
-        seq = scene.sequence_editor.sequences_all[swoosh_out_name]
+            name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
+        seq = scene.sequence_editor.sequences_all[swoosh_in_name]
         seq.volume = 0.5
+
+        # if asset_end_frame < audio_end_frame - 30:
+        #     swoosh_out_name = "{}.swoosh-out".format(object_name)
+        #     scene.sequence_editor.sequences.new_sound(
+        #         name=swoosh_out_name, filepath=os.path.join(library_path, "swoosh-out.wav"), channel=2, frame_start=asset_end_frame)
+        #     seq = scene.sequence_editor.sequences_all[swoosh_out_name]
+        #     seq.volume = 0.5
+    else:
+        asset_start_frame = None
+        asset_end_frame = None
+
+        image_plane.rotation_euler.x += random.uniform(-math.pi/8, math.pi/8)
+        image_plane.rotation_euler.y += random.uniform(-math.pi/8, math.pi/8)
+        image_plane.rotation_euler.z += random.uniform(-math.pi/8, math.pi/8)
 
     return (asset_start_frame, asset_end_frame)
 
 
-def add_text(custom_text, scene, stage, tag, location, audio_start_frame, audio_end_frame, material, library_path, duration):
+def add_text(library_path, custom_text, scene, stage, location, start_frame, end_frame, material):
     stage_root = stage["root"]
 
     stage_points = stage["reference_points"]
@@ -100,12 +109,13 @@ def add_text(custom_text, scene, stage, tag, location, audio_start_frame, audio_
         point = (stage_points["tr"] + stage_points["bl"]) / 2
     elif location in ("bottom", "bottom_right", "bottom_left"):
         point = (stage_points["br"] + stage_points["bl"]) / 2
+    elif location == "background":
+        point = stage_points["bg"]
     else:
         # center
         point = (stage_points["tr"] + stage_points["bl"]) / 2
 
-    object_name = "text.{}.{}".format(
-        audio_start_frame, tag["timeOffset"])
+    object_name = "text.{}.{}".format(start_frame, end_frame)
 
     # Create a new text object
     text = bpy.data.curves.new(
@@ -127,24 +137,27 @@ def add_text(custom_text, scene, stage, tag, location, audio_start_frame, audio_
     text_object.data.materials.append(material)
     scene.collection.objects.link(text_object)
 
-    asset_start_frame = audio_start_frame + \
-        math.floor(tag['timeOffset'] * scene.render.fps) - 10
-    asset_end_frame = asset_start_frame + duration
+    if start_frame is not None and end_frame is not None:
+        asset_start_frame = start_frame - 10
+        asset_end_frame = end_frame
 
-    animation.scale_up(text_object, asset_start_frame, asset_end_frame)
+        animation.scale_up(text_object, asset_start_frame, asset_end_frame)
 
-    swoosh_in_name = "{}.swoosh-in".format(object_name)
-    scene.sequence_editor.sequences.new_sound(
-        name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
-    seq = scene.sequence_editor.sequences_all[swoosh_in_name]
-    seq.volume = 0.5
-
-    if asset_end_frame < audio_end_frame - 30:
-        swoosh_out_name = "{}.swoosh-out".format(object_name)
+        swoosh_in_name = "{}.swoosh-in".format(object_name)
         scene.sequence_editor.sequences.new_sound(
-            name=swoosh_out_name, filepath=os.path.join(library_path, "swoosh-out.wav"), channel=2, frame_start=asset_end_frame)
-        seq = scene.sequence_editor.sequences_all[swoosh_out_name]
+            name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
+        seq = scene.sequence_editor.sequences_all[swoosh_in_name]
         seq.volume = 0.5
+
+        # if asset_end_frame < audio_end_frame - 30:
+        #     swoosh_out_name = "{}.swoosh-out".format(object_name)
+        #     scene.sequence_editor.sequences.new_sound(
+        #         name=swoosh_out_name, filepath=os.path.join(library_path, "swoosh-out.wav"), channel=2, frame_start=asset_end_frame)
+        #     seq = scene.sequence_editor.sequences_all[swoosh_out_name]
+        #     seq.volume = 0.5
+    else:
+        asset_start_frame = None
+        asset_end_frame = None
 
     return (asset_start_frame, asset_end_frame)
 
@@ -213,10 +226,17 @@ def add_stage(id, video_scene, location=(0, 0, 0)):
     # add stage directions
     bl, tl, tr, br = camera_stage_box(
         camera_ob, video_scene, camera_distance, safe_area=(0.1, 0.1, 0.1, 0.1))
+
+    bg = ((empty.matrix_world.inverted() @ tl) +
+          (empty.matrix_world.inverted() @ br)) / 2
+    bg.x = -10
+
+    # stage reference
     bpy.ops.object.add(type="EMPTY", location=bl)
     bpy.ops.object.add(type="EMPTY", location=tl)
     bpy.ops.object.add(type="EMPTY", location=tr)
     bpy.ops.object.add(type="EMPTY", location=br)
+    bpy.ops.object.add(type="EMPTY", location=bg)
 
     return {
         'name': empty.name,
@@ -226,6 +246,7 @@ def add_stage(id, video_scene, location=(0, 0, 0)):
             'bl': empty.matrix_world.inverted() @ bl,
             'tl': empty.matrix_world.inverted() @ tl,
             'tr': empty.matrix_world.inverted() @ tr,
-            'br': empty.matrix_world.inverted() @ br
+            'br': empty.matrix_world.inverted() @ br,
+            'bg': bg
         },
     }
