@@ -29,7 +29,7 @@ RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz \
 
 WORKDIR /workspace
 
-# RUN ${BLENDERPY} -m ensurepip && ${BLENDERPIP} install --upgrade pip && ${BLENDERPIP} install -r requirements.txt
+RUN ${BLENDERPY} -m ensurepip && ${BLENDERPIP} install --upgrade pip && ${BLENDERPIP} install .
 
 RUN mkdir /workspace/weaver_blender
 COPY ./setup.py /workspace/

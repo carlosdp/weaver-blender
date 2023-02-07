@@ -7,5 +7,5 @@ setup(name='weaver_blender',
       description='Blender renderer for Weaver',
       author='Carlos Diaz-Padron',
       packages=['weaver_blender'],
-      install_requires=['runpod', 'requests'],
+      install_requires=['runpod', 'requests', 'sentry-sdk'],
       )

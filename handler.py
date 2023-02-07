@@ -4,7 +4,17 @@ import subprocess
 import runpod
 from runpod.serverless.utils import validator
 import requests
+import sentry_sdk
 
+
+sentry_sdk.init(
+    dsn="https://ca84baeebae44315978743b944328285@o4504624881205248.ingest.sentry.io/4504640068124672",
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0
+)
 
 BLENDER_BIN = "/bin/blender" if sys.platform == "linux" else "/Applications/Blender.app/Contents/MacOS/Blender"
 
