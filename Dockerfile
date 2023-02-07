@@ -29,12 +29,11 @@ RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz \
 
 WORKDIR /workspace
 
-RUN ${BLENDERPY} -m ensurepip && ${BLENDERPIP} install --upgrade pip && ${BLENDERPIP} install .
-
 RUN mkdir /workspace/weaver_blender
 COPY ./setup.py /workspace/
 
-RUN pip install .
+RUN pip install -e .
+RUN ${BLENDERPY} -m ensurepip && ${BLENDERPIP} install --upgrade pip && ${BLENDERPIP} install -e .
 
 ENV SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
 
