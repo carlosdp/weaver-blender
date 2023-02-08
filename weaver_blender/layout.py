@@ -145,7 +145,7 @@ def add_text(library_path, custom_text, scene, stage, location, start_frame, end
     scene.collection.objects.link(text_object)
 
     if start_frame is not None and end_frame is not None:
-        asset_start_frame = start_frame - 10
+        asset_start_frame = start_frame - 21
         asset_end_frame = end_frame
 
         animation.scale_up(text_object, asset_start_frame, asset_end_frame)
