@@ -9,14 +9,15 @@ import sentry_sdk
 from weaver_blender import layout
 
 
-sentry_sdk.init(
-    dsn="https://ca84baeebae44315978743b944328285@o4504624881205248.ingest.sentry.io/4504640068124672",
+if os.environ.get('ENV') == 'production':
+    sentry_sdk.init(
+        dsn="https://ca84baeebae44315978743b944328285@o4504624881205248.ingest.sentry.io/4504640068124672",
 
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0
-)
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0
+    )
 
 
 supabase_url = os.environ["SUPABASE_URL"]

@@ -36,6 +36,7 @@ RUN pip install -e .
 RUN ${BLENDERPY} -m ensurepip && ${BLENDERPIP} install --upgrade pip && ${BLENDERPIP} install -e .
 
 ENV SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
+ENV ENV production
 
 COPY . /workspace
 

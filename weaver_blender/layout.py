@@ -117,24 +117,31 @@ def add_text(library_path, custom_text, scene, stage, location, start_frame, end
 
     object_name = "text.{}.{}".format(start_frame, end_frame)
 
-    # Create a new text object
-    text = bpy.data.curves.new(
-        name="text", type="FONT")
-    text.body = custom_text
-    text.align_x = "CENTER"
-    text.align_y = "CENTER"
-    text.size = 1
-    text.extrude = 0.1
-    text.text_boxes[0].width = 8
-    text.text_boxes[0].x = -4
+    with bpy.data.libraries.load(os.path.join(__file__, '..', '..', 'library.blend')) as (data_from, data_to):
+        data_to.objects = ['DefaultText']
 
-    text_object = bpy.data.objects.new(
-        name=object_name, object_data=text)
+    text_object = data_to.objects[0]
+    text_object.name = object_name
+
     text_object.parent = stage_root
-    # put text a little above main image
     text_object.location = point
     text_object.rotation_euler = (math.pi / 2, math.pi / 2, math.pi / 2)
-    text_object.data.materials.append(material)
+
+    stroke_material = bpy.data.materials.new("TextMaterial")
+    stroke_material.use_nodes = True
+    stroke_material.node_tree.nodes.clear()
+    stroke_emission = stroke_material.node_tree.nodes.new("ShaderNodeEmission")
+    stroke_emission.inputs[0].default_value = (0, 0, 0, 1)
+    stroke_output = stroke_material.node_tree.nodes.new(
+        "ShaderNodeOutputMaterial")
+    stroke_material.node_tree.links.new(
+        stroke_emission.outputs[0], stroke_output.inputs[0])
+
+    text_object.modifiers["GeometryNodes"]["Input_2"] = custom_text
+    text_object.modifiers["GeometryNodes"]["Input_3"] = material
+    text_object.modifiers["GeometryNodes"]["Input_4"] = stroke_material
+    text_object.modifiers["GeometryNodes"]["Input_5"] = 8.0
+
     scene.collection.objects.link(text_object)
 
     if start_frame is not None and end_frame is not None:
