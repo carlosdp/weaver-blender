@@ -71,10 +71,11 @@ def add_image(library_path, filepath, scene, stage, location, start_frame, end_f
     image_plane.rotation_euler = (math.pi / 2, math.pi / 2, math.pi / 2)
 
     if start_frame is not None and end_frame is not None:
-        asset_start_frame = start_frame - 10
+        asset_start_frame = start_frame - 21
         asset_end_frame = end_frame
 
-        animation.scale_up(image_plane, asset_start_frame, asset_end_frame)
+        animation.scale_up(
+            image_plane, start_frame, end_frame)
 
         swoosh_in_name = "{}.swoosh-in".format(object_name)
         scene.sequence_editor.sequences.new_sound(
@@ -148,7 +149,7 @@ def add_text(library_path, custom_text, scene, stage, location, start_frame, end
         asset_start_frame = start_frame - 21
         asset_end_frame = end_frame
 
-        animation.scale_up(text_object, asset_start_frame, asset_end_frame)
+        animation.scale_up(text_object, start_frame, end_frame)
 
         swoosh_in_name = "{}.swoosh-in".format(object_name)
         scene.sequence_editor.sequences.new_sound(
