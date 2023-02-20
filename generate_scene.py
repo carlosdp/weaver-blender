@@ -53,6 +53,22 @@ def download_storage_object(bucket, storage_key, output_path):
         f.write(fileRes.content)
 
 
+current_text_position = 'top'
+
+
+def next_text_position():
+    global current_text_position
+
+    if current_text_position == 'center':
+        current_text_position = 'bottom'
+    elif current_text_position == 'bottom':
+        current_text_position = 'top'
+    else:
+        current_text_position = 'center'
+
+    return current_text_position
+
+
 if '__main__' == __name__:
     parser = argparse.ArgumentParser()
     parser.add_argument('--library', type=str, required=True,
@@ -209,7 +225,7 @@ if '__main__' == __name__:
                             library_path, asset_file, video_scene, stage, direction['location'], tag_frame_start, tag_frame_start + duration)
                     elif direction['type'] == 'text':
                         layout.add_text(library_path, direction['data'], video_scene, stage,
-                                        direction['location'], tag_frame_start, tag_frame_start + duration, text_material)
+                                        next_text_position(), tag_frame_start, tag_frame_start + duration, text_material)
                 elif direction['location'] == 'background':
                     if direction['type'] in ('image', 'screenshot') and 'asset' in direction:
                         asset = direction['asset']
@@ -221,7 +237,7 @@ if '__main__' == __name__:
                             library_path, asset_file, video_scene, stage, direction['location'], None, None)
                     elif direction['type'] == 'text':
                         layout.add_text(
-                            library_path, direction['data'], video_scene, stage, direction['location'], None, None, text_material)
+                            library_path, direction['data'], video_scene, stage, next_text_position(), None, None, text_material)
 
         current_frame = frame_end + 1
 
