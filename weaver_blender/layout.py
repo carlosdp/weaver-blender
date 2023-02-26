@@ -17,9 +17,9 @@ def add_audio(name, sound_path, scene, frame_start, library_path):
     sequence = scene.sequence_editor.sequences_all[name]
     sequence.show_waveform = True
 
-    if frame_start > 1:
-        scene.sequence_editor.sequences.new_sound(
-            name="{}.transition".format(name), filepath=os.path.join(library_path, "swoosh-transition.wav"), channel=2, frame_start=frame_start - 30)
+    # if frame_start > 1:
+    #     scene.sequence_editor.sequences.new_sound(
+    #         name="{}.transition".format(name), filepath=os.path.join(library_path, "swoosh-transition.wav"), channel=2, frame_start=frame_start - 30)
 
     frame_end = sequence.frame_final_end
 
