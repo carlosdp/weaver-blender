@@ -180,6 +180,8 @@ if '__main__' == __name__:
                 'ffmpeg',
                 '-i', video_file_pre,
                 '-filter:v', 'fps=30',
+                '-vcodec', 'libx264',
+                '-acodec', 'aac',
                 '-y',
                 '{}'.format(video_file)
             ])
