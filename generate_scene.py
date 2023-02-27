@@ -170,7 +170,8 @@ if '__main__' == __name__:
 
         if video_direction is not None:
             video_id = video_direction["data"]["id"]
-            video_key = story["metadata"][video_id]["key"]
+            video_metadata = story["metadata"][video_id]
+            video_key = video_metadata["key"]
             video_file = "{}/{}.mp4".format(asset_workspace, block["id"])
             video_file_pre = "{}/pre-{}.mp4".format(
                 asset_workspace, block["id"])
@@ -183,7 +184,7 @@ if '__main__' == __name__:
                 '{}'.format(video_file)
             ])
 
-            if 'speech' in block:
+            if video_id == 'walkthrough':
                 speech_file = "{}/{}".format(asset_workspace, block['id'])
                 download_storage_object(
                     'assets', block['speech']['asset']['key'], speech_file)
