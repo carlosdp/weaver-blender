@@ -77,11 +77,11 @@ def add_image(library_path, filepath, scene, stage, location, start_frame, end_f
         animation.scale_up(
             image_plane, start_frame, end_frame)
 
-        swoosh_in_name = "{}.swoosh-in".format(object_name)
-        scene.sequence_editor.sequences.new_sound(
-            name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
-        seq = scene.sequence_editor.sequences_all[swoosh_in_name]
-        seq.volume = 0.5
+        # swoosh_in_name = "{}.swoosh-in".format(object_name)
+        # scene.sequence_editor.sequences.new_sound(
+        #     name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
+        # seq = scene.sequence_editor.sequences_all[swoosh_in_name]
+        # seq.volume = 0.5
 
         # if asset_end_frame < audio_end_frame - 30:
         #     swoosh_out_name = "{}.swoosh-out".format(object_name)
@@ -151,11 +151,11 @@ def add_text(library_path, custom_text, scene, stage, location, start_frame, end
 
         animation.scale_up(text_object, start_frame, end_frame)
 
-        swoosh_in_name = "{}.swoosh-in".format(object_name)
-        scene.sequence_editor.sequences.new_sound(
-            name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
-        seq = scene.sequence_editor.sequences_all[swoosh_in_name]
-        seq.volume = 0.5
+        # swoosh_in_name = "{}.swoosh-in".format(object_name)
+        # scene.sequence_editor.sequences.new_sound(
+        #     name=swoosh_in_name, filepath=os.path.join(library_path, "swoosh-in.wav"), channel=2, frame_start=asset_start_frame)
+        # seq = scene.sequence_editor.sequences_all[swoosh_in_name]
+        # seq.volume = 0.5
 
         # if asset_end_frame < audio_end_frame - 30:
         #     swoosh_out_name = "{}.swoosh-out".format(object_name)
