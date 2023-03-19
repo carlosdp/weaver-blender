@@ -25,28 +25,43 @@ if '__main__' == __name__:
 
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 
-    video_scene = bpy.data.scenes['Video']
-    video_scene.render.ffmpeg.audio_codec = 'AAC'
+    scenes = []
 
-    bpy.ops.sound.mixdown(filepath="{}.mp3".format(args.output))
+    sequence_scene = bpy.data.scenes['Sequence']
 
-    video_scene.render.filepath = "{}.mp4".format(args.output)
-    video_scene.render.image_settings.file_format = 'FFMPEG'
-    video_scene.render.ffmpeg.format = 'MPEG4'  # Matroska?
-    video_scene.render.ffmpeg.audio_codec = 'NONE'
-    video_scene.eevee.taa_render_samples = 32
+    for scene in bpy.data.scenes:
+        if 'Video' in scene.name:
+            scene.render.ffmpeg.audio_codec = 'AAC'
 
-    if args.preview:
-        video_scene = bpy.data.scenes['Video']
-        video_scene.render.resolution_percentage = 50
-        video_scene.eevee.taa_render_samples = 16
+            scene.render.filepath = "/tmp/{}.mp4".format(scene.name)
+            scene.render.image_settings.file_format = 'FFMPEG'
+            scene.render.ffmpeg.format = 'MPEG4'  # Matroska?
+            scene.render.ffmpeg.audio_codec = 'NONE'
+            scene.eevee.taa_render_samples = 32
 
-    bpy.ops.render.render(animation=True, scene=video_scene.name)
+            scenes.append(scene)
+
+    # if args.preview:
+    #     video_scene = bpy.data.scenes['Video']
+    #     video_scene.render.resolution_percentage = 50
+    #     video_scene.eevee.taa_render_samples = 16
+
+    bpy.ops.sound.mixdown(filepath="{}.mp3".format(
+        args.output), scene=sequence_scene.name)
+
+    for video_scene in scenes:
+        bpy.ops.render.render(animation=True, scene=video_scene.name)
+
+    file_args = []
+
+    for scene in scenes:
+        file_args.append('-i')
+        file_args.append(scene.render.filepath)
 
     # combine audio and video
     subprocess.run([
         'ffmpeg',
-        '-i', '{}.mp4'.format(args.output),
+    ] + file_args + [
         '-i', '{}.mp3'.format(args.output),
         '-c:v', 'copy',
         '-c:a', 'aac',
@@ -57,6 +72,8 @@ if '__main__' == __name__:
     print('render complete, cleaning up')
 
     os.remove('{}.mp3'.format(args.output))
-    os.remove('{}.mp4'.format(args.output))
+
+    for scene in scenes:
+        os.remove(scene.render.filepath)
 
     print('done')

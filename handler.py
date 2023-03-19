@@ -84,7 +84,7 @@ def handler(event):
         f.write(story)
 
     blend_proc = subprocess.run([BLENDER_BIN, "--background", "--python-exit-code", "1",
-                                 "--python", "generate_scene.py", "--", "--library", "{}.blend".format(
+                                 "--python", "generate_summary.py", "--", "--library", "{}.blend".format(
                                      'common'),
                                 "--story", './story.json', "--output", "{}/output.mp4".format(asset_workspace)])
 
@@ -97,17 +97,17 @@ def handler(event):
     # upload_storage_object("blend-assets", blend_storage_key,
     #                       "{}/output.blend".format(asset_workspace), "application/blender", upsert=True)
 
-    # render_proc = subprocess.run([BLENDER_BIN, "--background", "{}/output.blend".format(asset_workspace), "--python-exit-code", "1",
-    #                               "--python", "render_story.py", "--",
-    #                               "--output", "{}/output.mp4".format(asset_workspace), "--preview"])
+    render_proc = subprocess.run([BLENDER_BIN, "--background", "{}/output.blend".format(asset_workspace), "--python-exit-code", "1",
+                                  "--python", "render_story.py", "--",
+                                  "--output", "{}/output.mp4".format(asset_workspace), "--preview"])
 
-    # if render_proc.returncode != 0:
-    #     print("error rendering {}".format(id))
-    #     raise Exception("error rendering {}".format(id))
+    if render_proc.returncode != 0:
+        print("error rendering {}".format(id))
+        raise Exception("error rendering {}".format(id))
 
     storage_key = "{}/{}.mp4".format(user_id, id)
 
-    upload_storage_object("video-assets", storage_key,
+    upload_storage_object("assets", storage_key,
                           "{}/output.mp4".format(asset_workspace), "video/mp4", upsert=True)
 
     return {"result": storage_key}
