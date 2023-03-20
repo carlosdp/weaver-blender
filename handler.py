@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import runpod
-from runpod.serverless.utils import validator
 import requests
 import sentry_sdk
 
