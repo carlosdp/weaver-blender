@@ -78,8 +78,6 @@ if '__main__' == __name__:
     parser.add_argument('--story', type=str, required=True,
                         help='path to story descriptor JSON')
     parser.add_argument('--output', type=str, required=True,
-                        help='output path', default='/tmp/output.mp4')
-    parser.add_argument('--blend_output', type=str, required=True,
                         help='output path', default='/tmp/output.blend')
     parser.add_argument('--resolution', type=str, required=False,
                         help='output path', default='1920x1080')
@@ -226,4 +224,4 @@ if '__main__' == __name__:
 
     print('done generating scene')
 
-    bpy.ops.wm.save_mainfile(filepath=args.blend_output)
+    bpy.ops.wm.save_mainfile(filepath=args.output)
