@@ -46,8 +46,9 @@ if '__main__' == __name__:
     #     video_scene.render.resolution_percentage = 50
     #     video_scene.eevee.taa_render_samples = 16
 
+    bpy.context.window.scene = sequence_scene
     bpy.ops.sound.mixdown(filepath="{}.mp3".format(
-        args.output), scene=sequence_scene.name)
+        args.output))
 
     for video_scene in scenes:
         bpy.ops.render.render(animation=True, scene=video_scene.name)
