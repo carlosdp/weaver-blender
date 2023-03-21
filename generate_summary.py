@@ -215,6 +215,10 @@ if '__main__' == __name__:
             else:
                 print('missing asset {}'.format(asset['id']))
 
+        if story['metadata']['title']:
+            layout.add_text(library_path, story['metadata']['title'],
+                            video_scene, stage, 'bottom', None, None, text_material)
+
     sequence_scene.frame_end = current_frame
     # add music
     sequence_scene.sequence_editor.sequences.new_sound(

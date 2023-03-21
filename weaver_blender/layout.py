@@ -119,7 +119,7 @@ def add_text(library_path, custom_text, scene, stage, location, start_frame, end
     object_name = "text.{}.{}".format(start_frame, end_frame)
 
     with bpy.data.libraries.load(os.path.join(__file__, '..', '..', 'library.blend')) as (data_from, data_to):
-        data_to.objects = ['DefaultText']
+        data_to.objects = ['DetailText']
 
     text_object = data_to.objects[0]
     text_object.name = object_name

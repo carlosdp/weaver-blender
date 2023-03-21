@@ -50,6 +50,7 @@ if '__main__' == __name__:
         args.output))
 
     for video_scene in scenes:
+        bpy.context.window.scene = video_scene
         bpy.ops.render.render(animation=True, scene=video_scene.name)
 
     file_args = []
@@ -58,10 +59,27 @@ if '__main__' == __name__:
         file_args.append('-i')
         file_args.append(scene.render.filepath)
 
+    # write concat file list to txt
+    with open('{}.txt'.format(args.output), 'w') as f:
+        for scene in scenes:
+            f.write("file {}\n".format(scene.render.filepath))
+
+    # combine videos
+    subprocess.run([
+        'ffmpeg',
+        '-f', 'concat',
+        '-safe', '0',
+        '-i', '{}.txt'.format(args.output),
+        '-c:v', 'copy',
+        '-c:a', 'aac',
+        '-y',
+        '{}.videos.mp4'.format(args.output)
+    ])
+
     # combine audio and video
     subprocess.run([
         'ffmpeg',
-    ] + file_args + [
+        '-i', '{}.videos.mp4'.format(args.output),
         '-i', '{}.mp3'.format(args.output),
         '-c:v', 'copy',
         '-c:a', 'aac',
@@ -72,6 +90,8 @@ if '__main__' == __name__:
     print('render complete, cleaning up')
 
     os.remove('{}.mp3'.format(args.output))
+    os.remove('{}.txt'.format(args.output))
+    os.remove('{}.videos.mp4'.format(args.output))
 
     for scene in scenes:
         os.remove(scene.render.filepath)
