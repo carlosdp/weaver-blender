@@ -85,7 +85,7 @@ def handler(event):
     blend_proc = subprocess.run([BLENDER_BIN, "--background", "--python-exit-code", "1",
                                  "--python", "generate_summary.py", "--", "--library", "{}.blend".format(
                                      'common'),
-                                "--story", './story.json', "--output", "{}/output.blend".format(asset_workspace)])
+                                "--story", './story.json', "--resolution", "1920x1080", "--output", "{}/output.blend".format(asset_workspace)])
 
     if blend_proc.returncode != 0:
         print("error generating {}".format(id))

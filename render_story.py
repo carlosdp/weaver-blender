@@ -53,12 +53,6 @@ if '__main__' == __name__:
         bpy.context.window.scene = video_scene
         bpy.ops.render.render(animation=True, scene=video_scene.name)
 
-    file_args = []
-
-    for scene in scenes:
-        file_args.append('-i')
-        file_args.append(scene.render.filepath)
-
     # write concat file list to txt
     with open('{}.txt'.format(args.output), 'w') as f:
         for scene in scenes:
