@@ -31,8 +31,6 @@ if '__main__' == __name__:
 
     for scene in bpy.data.scenes:
         if 'Video' in scene.name:
-            scene.render.ffmpeg.audio_codec = 'AAC'
-
             scene.render.filepath = "/tmp/{}.mp4".format(scene.name)
             scene.render.image_settings.file_format = 'FFMPEG'
             scene.render.ffmpeg.format = 'MPEG4'  # Matroska?
@@ -47,6 +45,7 @@ if '__main__' == __name__:
     #     video_scene.eevee.taa_render_samples = 16
 
     bpy.context.window.scene = sequence_scene
+    sequence_scene.render.ffmpeg.audio_codec = 'AAC'
     bpy.ops.sound.mixdown(filepath="{}.mp3".format(
         args.output))
 
