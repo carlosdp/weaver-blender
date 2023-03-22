@@ -211,7 +211,7 @@ if '__main__' == __name__:
                 download_storage_object(
                     'assets', asset['storage']['key'], asset_file)
                 layout.add_image(
-                    library_path, asset_file, video_scene, stage, 'center', None, None)
+                    library_path, asset_file, video_scene, stage, 'background', None, None)
             else:
                 print('missing asset {}'.format(asset['id']))
 

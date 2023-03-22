@@ -67,7 +67,7 @@ def add_image(library_path, filepath, scene, stage, location, start_frame, end_f
     image_data.pack()
 
     image_plane.location = point
-    image_plane.scale = (4, 4, 4) if location != "background" else (8, 8, 8)
+    image_plane.scale = (4, 4, 4) if location != "background" else (15, 15, 15)
     image_plane.rotation_euler = (math.pi / 2, math.pi / 2, math.pi / 2)
 
     if start_frame is not None and end_frame is not None:
