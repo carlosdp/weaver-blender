@@ -75,7 +75,7 @@ def upload_storage_object(bucket, storage_key, filepath, content_type, upsert=Fa
 def handler(event):
     input = event["input"]
 
-    if input["story"]:
+    if 'story' in input:
         story = input["story"]
         id = input["id"]
         user_id = input["user_id"]

@@ -221,10 +221,10 @@ if '__main__' == __name__:
 
     sequence_scene.frame_end = current_frame
     # add music
-    sequence_scene.sequence_editor.sequences.new_sound(
-        name="music", filepath=os.path.join(library_path, "music.mp3"), channel=1, frame_start=1)
-    music = sequence_scene.sequence_editor.sequences_all['music']
-    music.volume = 0.2
+    # sequence_scene.sequence_editor.sequences.new_sound(
+    #     name="music", filepath=os.path.join(library_path, "music.mp3"), channel=1, frame_start=1)
+    # music = sequence_scene.sequence_editor.sequences_all['music']
+    # music.volume = 0.2
 
     print('done generating scene')
 
