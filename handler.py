@@ -75,41 +75,67 @@ def upload_storage_object(bucket, storage_key, filepath, content_type, upsert=Fa
 def handler(event):
     input = event["input"]
 
-    story = input["story"]
-    id = input["id"]
-    user_id = input["user_id"]
+    if input["story"]:
+        story = input["story"]
+        id = input["id"]
+        user_id = input["user_id"]
 
-    with open('./story.json', 'w') as f:
-        f.write(story)
+        with open('./story.json', 'w') as f:
+            f.write(story)
 
-    blend_proc = subprocess.run([BLENDER_BIN, "--background", "--python-exit-code", "1",
-                                 "--python", "generate_summary.py", "--", "--library", "{}.blend".format(
-                                     'common'),
-                                "--story", './story.json', "--resolution", "1080x1920", "--output", "{}/output.blend".format(asset_workspace)])
+        blend_proc = subprocess.run([BLENDER_BIN, "--background", "--python-exit-code", "1",
+                                    "--python", "generate_summary.py", "--", "--library", "{}.blend".format(
+                                        'common'),
+                                     "--story", './story.json', "--resolution", "1080x1920", "--output", "{}/output.blend".format(asset_workspace)])
 
-    if blend_proc.returncode != 0:
-        print("error generating {}".format(id))
-        raise Exception("error generating {}".format(id))
+        if blend_proc.returncode != 0:
+            print("error generating {}".format(id))
+            raise Exception("error generating {}".format(id))
 
-    # blend_storage_key = "{}/{}.blend".format(user_id, id)
+        # blend_storage_key = "{}/{}.blend".format(user_id, id)
 
-    # upload_storage_object("blend-assets", blend_storage_key,
-    #                       "{}/output.blend".format(asset_workspace), "application/blender", upsert=True)
+        # upload_storage_object("blend-assets", blend_storage_key,
+        #                       "{}/output.blend".format(asset_workspace), "application/blender", upsert=True)
 
-    render_proc = subprocess.run([BLENDER_BIN, "--background", "{}/output.blend".format(asset_workspace), "--python-exit-code", "1",
-                                  "--python", "render_story.py", "--",
-                                  "--output", "{}/output.mp4".format(asset_workspace), "--preview"])
+        render_proc = subprocess.run([BLENDER_BIN, "--background", "{}/output.blend".format(asset_workspace), "--python-exit-code", "1",
+                                      "--python", "render_story.py", "--",
+                                      "--output", "{}/output.mp4".format(asset_workspace), "--preview"])
 
-    if render_proc.returncode != 0:
-        print("error rendering {}".format(id))
-        raise Exception("error rendering {}".format(id))
+        if render_proc.returncode != 0:
+            print("error rendering {}".format(id))
+            raise Exception("error rendering {}".format(id))
 
-    storage_key = "{}/{}.mp4".format(user_id, id)
+        storage_key = "{}/{}.mp4".format(user_id, id)
 
-    upload_storage_object("assets", storage_key,
-                          "{}/output.mp4".format(asset_workspace), "video/mp4", upsert=True)
+        upload_storage_object("assets", storage_key,
+                              "{}/output.mp4".format(asset_workspace), "video/mp4", upsert=True)
 
-    return {"result": storage_key}
+        return {"result": storage_key}
+    else:
+        # final video render
+        contents = input["contents"]
+
+        videos = []
+
+        for content in contents:
+            download_storage_object(
+                "assets", content["video"], "{}/{}.mp4".format(asset_workspace, content["id"]))
+            videos.append("{}/{}.mp4".format(asset_workspace, content["id"]))
+
+        # combine videos with ffmpeg
+        ffmpeg_proc = subprocess.run(["ffmpeg", "-y", "-i", "concat:{}".format(
+            "|".join(videos)), "-c", "copy", "{}/output.mp4".format(asset_workspace)])
+
+        if ffmpeg_proc.returncode != 0:
+            print("error combining videos")
+            raise Exception("error combining videos")
+
+        storage_key = "{}/{}.mp4".format(input["user_id"], input["id"])
+
+        upload_storage_object("assets", storage_key,
+                              "{}/output.mp4".format(asset_workspace), "video/mp4", upsert=True)
+
+        return {"result": storage_key}
 
 
 runpod.serverless.start({
