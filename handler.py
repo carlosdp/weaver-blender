@@ -122,9 +122,14 @@ def handler(event):
                 "assets", content["video"], "{}/{}.mp4".format(asset_workspace, content["id"]))
             videos.append("{}/{}.mp4".format(asset_workspace, content["id"]))
 
-        # combine videos with ffmpeg
-        ffmpeg_proc = subprocess.run(["ffmpeg", "-y", "-i", "concat:{}".format(
-            "|".join(videos)), "-c", "copy", "{}/output.mp4".format(asset_workspace)])
+        # write ffmpeg concat file list to videos.txt
+        with open("{}/videos.txt".format(asset_workspace), "w") as f:
+            for video in videos:
+                f.write("file '{}'\n".format(video))
+
+        # combine videos with ffmpeg, using concat demuxer
+        ffmpeg_proc = subprocess.run(["ffmpeg", "-f", "concat", "-safe", "0", "-i", "{}/videos.txt".format(
+            asset_workspace), "-c", "copy", "{}/output.mp4".format(asset_workspace)])
 
         if ffmpeg_proc.returncode != 0:
             print("error combining videos")
