@@ -47,3 +47,14 @@ def scale_up(obj, asset_start_frame, asset_end_frame):
                 if i == 0:
                     # elastic interpolation
                     keyframe.interpolation = 'BOUNCE'
+
+
+def slow_zoom(obj, asset_start_frame, asset_end_frame):
+    original_scale = (obj.scale.x, obj.scale.y, obj.scale.z)
+
+    obj.scale = original_scale
+    obj.keyframe_insert("scale", frame=asset_start_frame)
+
+    obj.scale = (original_scale[0] * 0.9,
+                 original_scale[1] * 0.9, original_scale[2] * 0.9)
+    obj.keyframe_insert("scale", frame=asset_end_frame)

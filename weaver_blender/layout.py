@@ -67,15 +67,14 @@ def add_image(library_path, filepath, scene, stage, location, start_frame, end_f
     image_data.pack()
 
     image_plane.location = point
-    image_plane.scale = (4, 4, 4) if location != "background" else (15, 15, 15)
+    image_plane.scale = (4, 4, 4) if location != "background" else (25, 25, 25)
     image_plane.rotation_euler = (math.pi / 2, math.pi / 2, math.pi / 2)
 
     if start_frame is not None and end_frame is not None:
-        asset_start_frame = start_frame - 21
-        asset_end_frame = end_frame
-
-        animation.scale_up(
+        animation.slow_zoom(
             image_plane, start_frame, end_frame)
+        asset_start_frame = start_frame
+        asset_end_frame = end_frame
 
         # swoosh_in_name = "{}.swoosh-in".format(object_name)
         # scene.sequence_editor.sequences.new_sound(
@@ -92,10 +91,6 @@ def add_image(library_path, filepath, scene, stage, location, start_frame, end_f
     else:
         asset_start_frame = None
         asset_end_frame = None
-
-        image_plane.rotation_euler.x += random.uniform(-math.pi/8, math.pi/8)
-        image_plane.rotation_euler.y += random.uniform(-math.pi/8, math.pi/8)
-        image_plane.rotation_euler.z += random.uniform(-math.pi/8, math.pi/8)
 
     return (asset_start_frame, asset_end_frame)
 
