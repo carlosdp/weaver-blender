@@ -135,12 +135,24 @@ def handler(event):
             print("error combining videos")
             raise Exception("error combining videos")
 
-        storage_key = "{}/{}.mp4".format(input["user_id"], input["id"])
+        # get first frame of video as png using ffmpeg
+        ffmpeg_proc = subprocess.run(["ffmpeg", "-i", "{}/output.mp4".format(
+            asset_workspace), "-vframes", "1", "-q:v", "2", "{}/output.png".format(asset_workspace)])
+
+        if ffmpeg_proc.returncode != 0:
+            print("error getting first frame")
+            raise Exception("error getting first frame")
+
+        storage_key = "{}/stories/{}.mp4".format(input["user_id"], input["id"])
+        screenshot_storage_key = "{}/stories/{}.png".format(
+            input["user_id"], input["id"])
 
         upload_storage_object("assets", storage_key,
                               "{}/output.mp4".format(asset_workspace), "video/mp4", upsert=True)
+        upload_storage_object("assets", screenshot_storage_key,
+                              "{}/output.png".format(asset_workspace), "image/png", upsert=True)
 
-        return {"result": storage_key}
+        return {"result": storage_key, "screenshot": screenshot_storage_key}
 
 
 runpod.serverless.start({
