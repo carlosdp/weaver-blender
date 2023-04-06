@@ -34,7 +34,7 @@ jobs:
       - name: Clean up old images
         uses: actions/delete-package-versions@v4
         with:
-          package-name: ${{ env.IMAGE_NAME }}
+          package-name: "weaver-blender"
           package-type: "container"
           min-versions-to-keep: 3
 
